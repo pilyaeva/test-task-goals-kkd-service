@@ -215,10 +215,6 @@ HTTP-код: `200 OK`.
 
 #### Тестирование
 
-Уровни: сервис (unit, репозиторий замокан) — логика сортировки, связывания и подсчёта; контроллер (`@WebMvcTest` + `MockMvc`) — формат ответа и коды; интеграционный (PostgreSQL + Flyway) — реальный запрос и подсчёт `run_problems`.
-
-HTTP-сервер в тестах не запускается: никаких `@SpringBootTest(webEnvironment = RANDOM_PORT/DEFINED_PORT)` и `TestRestTemplate`. Запросы выполняются через `MockMvc` (без сетевого порта); интеграционные тесты проверяют сервис и репозиторий напрямую (`@DataJpaTest` или `@SpringBootTest(webEnvironment = MOCK)`), без HTTP.
-
 ##### Успешные сценарии
 
 | № | Сценарий | Исходные данные | Ожидаемый результат |
@@ -281,9 +277,21 @@ GET /actuator/health
 
 Детали компонентов (`components`) не раскрываются: `management.endpoint.health.show-details=never` (по умолчанию).
 
+#### Алгоритм
+
+Не требуется
+
+#### Тестирование
+
+Не требуется
+
 ## Ключевые решения
 
-Почему выбраны именно такие решения.
+### Тестирование
+
+Уровни: сервис (unit, репозиторий замокан); контроллер (`@WebMvcTest` + `MockMvc`) — формат ответа и коды; интеграционный (PostgreSQL + Flyway) — реальный запрос и подсчёт `run_problems`.
+
+HTTP-сервер в тестах не запускается: никаких `@SpringBootTest(webEnvironment = RANDOM_PORT/DEFINED_PORT)` и `TestRestTemplate`. Запросы выполняются через `MockMvc` (без сетевого порта); интеграционные тесты проверяют сервис и репозиторий напрямую (`@DataJpaTest` или `@SpringBootTest(webEnvironment = MOCK)`), без HTTP.
 
 ## Обработка ошибок
 
