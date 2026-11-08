@@ -152,7 +152,46 @@ erDiagram
 
 ## API
 
-Эндпоинты, методы, запросы, ответы, коды ошибок.
+### Получение списка прогонов
+
+GET /api/runs
+
+#### Входные данные
+
+Нет
+
+#### Выходные данные
+
+Массив объектов прогонов. Каждый элемент массива:
+
+| Поле | Тип данных | Обязательность | Описание |
+|---|---|---|---|
+| id | BIGINT | Да | Идентификатор прогона (`runs.id`) |
+| status | STRING | Да | Статус прогона (`runs.status`) |
+| snapshotDate | DATE (`YYYY-MM-DD`) | Да | Дата снимка данных (`runs.snapshot_date`) |
+| comparedRunId | BIGINT | Нет | Идентификатор прогона, с которым сравнивается текущий (`runs.compared_run_id`); `null`, если сравнения нет |
+| problemsCount | INTEGER | Да | Число найденных проблем: `COUNT(run_problems)` по `run_id`; `0`, если проблем нет |
+
+Пример ответа:
+
+```json
+[
+  {
+    "id": 2,
+    "status": "COMPLETED",
+    "snapshotDate": "2026-11-01",
+    "comparedRunId": 1,
+    "problemsCount": 5
+  },
+  {
+    "id": 1,
+    "status": "COMPLETED",
+    "snapshotDate": "2026-10-01",
+    "comparedRunId": null,
+    "problemsCount": 3
+  }
+]
+```
 
 ## Ключевые решения
 
