@@ -169,7 +169,7 @@ GET /api/runs
 | id | BIGINT | Да | Идентификатор прогона (`runs.id`) |
 | status | STRING | Да | Статус прогона (`runs.status`) |
 | snapshotDate | DATE (`YYYY-MM-DD`) | Да | Дата снимка данных (`runs.snapshot_date`) |
-| comparedRunId | BIGINT | Нет | Идентификатор прогона, с которым сравнивается текущий (`runs.compared_run_id`); `null`, если сравнения нет |
+| comparedRunId | BIGINT | Нет | Идентификатор прогона, с которым сравнивается текущий; вычисляется, а не хранится в БД: предыдущий по `snapshot_date` прогон; `null`, если предыдущего нет |
 | problemsCount | INTEGER | Да | Число найденных проблем: `COUNT(run_problems)` по `run_id`; `0`, если проблем нет |
 
 Пример ответа:

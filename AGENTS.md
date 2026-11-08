@@ -28,7 +28,6 @@ cp .env.example .env  # потом заполнить вручную, см. сп
 
 - Сборка: `./mvnw clean verify`
 - Тесты: `./mvnw test`
-- Интеграционные тесты: `./mvnw verify -Pintegration-test`
 - Запуск локально: `./mvnw spring-boot:run`
 
 ## Главные правила
