@@ -25,7 +25,6 @@
 ```mermaid
 erDiagram
     departments ||--o{ departments : "parent_department_id"
-    departments ||--o{ runs : "department_id"
     departments ||--o{ employees : "department_id"
     employees ||--o{ goals : "assignee_employee_id"
     goal_statuses ||--o{ goals : "status_id"
@@ -33,6 +32,7 @@ erDiagram
     goals ||--o{ key_results : "goal_id"
     runs ||--o{ run_problems : "run_id"
     rules ||--o{ run_problems : "rule_id"
+    goals ||--o{ run_problems : "goal_id"
 
     departments {
         BIGINT id PK
@@ -71,12 +71,12 @@ erDiagram
         BIGINT id PK
         VARCHAR status
         DATE snapshot_date
-        BIGINT department_id FK
     }
     run_problems {
         BIGINT id PK
         BIGINT run_id FK
         BIGINT rule_id FK
+        BIGINT goal_id FK
     }
 ```
 
@@ -140,7 +140,6 @@ erDiagram
 | id | BIGINT | PK | Идентификатор прогона |
 | status | VARCHAR | | Статус прогона |
 | snapshot_date | DATE | | Дата, на которую делается срез данных |
-| department_id | BIGINT | FK → departments.id | Подразделение, по которому выполнен прогон |
 
 #### run_problems — найденные проблемы
 
@@ -149,6 +148,7 @@ erDiagram
 | id | BIGINT | PK | Идентификатор проблемы |
 | run_id | BIGINT | FK → runs.id | Прогон, в котором найдена проблема |
 | rule_id | BIGINT | FK → rules.id | Правило, которое сработало |
+| goal_id | BIGINT | FK → goals.id | Цель, по которой найдена проблема |
 
 ## API
 
@@ -162,15 +162,17 @@ GET /api/runs
 
 #### Выходные данные
 
+HTTP-код: `200 OK`.
+
 Массив объектов прогонов. Каждый элемент массива:
 
 | Поле | Тип данных | Обязательность | Описание |
 |---|---|---|---|
-| id | BIGINT | Да | Идентификатор прогона (`runs.id`) |
-| status | STRING | Да | Статус прогона (`runs.status`) |
-| snapshotDate | DATE (`YYYY-MM-DD`) | Да | Дата снимка данных (`runs.snapshot_date`) |
-| comparedRunId | BIGINT | Нет | Идентификатор прогона, с которым сравнивается текущий; вычисляется, а не хранится в БД: предыдущий по `snapshot_date` прогон; `null`, если предыдущего нет |
-| problemsCount | INTEGER | Да | Число найденных проблем: `COUNT(run_problems)` по `run_id`; `0`, если проблем нет |
+| id | BIGINT | Да | Идентификатор прогона |
+| status | STRING | Да | Статус прогона |
+| snapshotDate | DATE (`YYYY-MM-DD`) | Да | Дата снимка данных |
+| comparedRunId | BIGINT | Нет | Идентификатор прогона, с которым сравнивается текущий |
+| problemsCount | INTEGER | Да | Число найденных проблем |
 
 Пример ответа:
 
@@ -192,6 +194,56 @@ GET /api/runs
   }
 ]
 ```
+
+#### Алгоритм
+
+1. Получить все прогоны из таблицы `runs`.
+2. Для каждого прогона получить количество проблем из таблицы `run_problems` по `runs.id` = `run_problems.run_id`.
+3. Отсортировать прогоны по дате снимка (snapshot_date) по убыванию (сначала самый новый).
+4. Каждый прогон связать с предыдущим (прогон с ближайшей более ранней датой снимка).
+    1. Если для прогона не найден предыдущий прогон, то предыдущий прогон установить null.
+5. Вернуть список прогонов:
+
+| Поле в ответе | Источник данных |
+|---|---|
+| id | runs.id |
+| status  | runs.status |
+| snapshotDate | runs.snapshot_date |
+| comparedRunId | Предыдущий по `snapshot_date` прогон; `null`, если предыдущего нет |
+| problemsCount | `COUNT(run_problems)` по `run_id`; `0`, если проблем нет |
+
+
+#### Тестирование
+
+Уровни: сервис (unit, репозиторий замокан) — логика сортировки, связывания и подсчёта; контроллер (`@WebMvcTest` + `MockMvc`) — формат ответа и коды; интеграционный (PostgreSQL + Flyway) — реальный запрос и подсчёт `run_problems`.
+
+HTTP-сервер в тестах не запускается: никаких `@SpringBootTest(webEnvironment = RANDOM_PORT/DEFINED_PORT)` и `TestRestTemplate`. Запросы выполняются через `MockMvc` (без сетевого порта); интеграционные тесты проверяют сервис и репозиторий напрямую (`@DataJpaTest` или `@SpringBootTest(webEnvironment = MOCK)`), без HTTP.
+
+##### Успешные сценарии
+
+| № | Сценарий | Исходные данные | Ожидаемый результат |
+|---|---|---|---|
+| 1 | Пример из спецификации | Прогон 1 (`2026-10-01`, 3 проблемы), прогон 2 (`2026-11-01`, 5 проблем) | HTTP 200; порядок в массиве: сначала прогон 2, затем прогон 1; прогон 2: `comparedRunId=1`, `problemsCount=5`; прогон 1: `comparedRunId=null`, `problemsCount=3` |
+| 2 | Цепочка из трёх прогонов | Прогоны с датами D1 < D2 < D3 | `comparedRunId`: D1 → `null`, D2 → id(D1), D3 → id(D2) |
+| 3 | Подсчёт проблем | Прогон с 4 записями в `run_problems` | `problemsCount=4` |
+| 4 | Прогон без проблем | Прогон без записей в `run_problems` | `problemsCount=0` (не `null`) |
+| 5 | Проблемы не смешиваются между прогонами | Прогон A — 2 проблемы, прогон B — 7 проблем | A: `2`, B: `7` |
+| 6 | Формат ответа | Любой непустой набор | `Content-Type: application/json`; поля `id`, `status`, `snapshotDate`, `comparedRunId`, `problemsCount`; `snapshotDate` в формате `YYYY-MM-DD`; `comparedRunId: null` присутствует в JSON явно |
+| 7 | Разные статусы | Прогоны со статусами `COMPLETED` и другими | Возвращаются все прогоны, `status` передаётся без изменений |
+
+##### Краевые сценарии
+
+| № | Сценарий | Исходные данные | Ожидаемый результат |
+|---|---|---|---|
+| 8 | Нет прогонов | Таблица `runs` пуста | HTTP 200, `[]` (не 404, не `null`) |
+| 9 | Один прогон | Одна запись в `runs` | Один элемент, `comparedRunId=null` |
+| 10 | Порядок `id` не совпадает с порядком дат | Прогон `id=5` с датой `2026-01-01`, прогон `id=2` с датой `2026-06-01` | Предыдущий определяется по `snapshot_date`, а не по `id`: у `id=2` `comparedRunId=5`, у `id=5` — `null` |
+| 11 | Одинаковая `snapshot_date` у нескольких прогонов | Два прогона с одной датой | Результат детерминирован при повторных вызовах; связывание не образует цикл и не ссылается на сам прогон (правило tie-break — см. открытые вопросы) |
+| 12 | Прогон не ссылается сам на себя | Любой набор | Ни у одного элемента `comparedRunId` не равен его `id` |
+| 13 | Прогон прошлого или будущего в сравнении с текущей датой | `snapshot_date` в далёком прошлом / будущем | Обрабатываются как обычные, сортировка корректна |
+| 15 | Большой объём | ~1000 прогонов, у каждого десятки проблем | HTTP 200, значения корректны; число SQL-запросов не растёт пропорционально числу прогонов (нет N+1) |
+| 16 | Метод не поддерживается | `POST /api/runs` | HTTP 405 в едином формате ошибок |
+| 17 | Ошибка БД | Репозиторий выбрасывает исключение | HTTP 500 в едином формате ошибок, без утечки деталей (стектрейс, SQL) |
 
 ### Проверка состояния сервиса
 
