@@ -87,13 +87,22 @@ erDiagram
 
 #### departments — подразделения
 
+<details>
+<summary>Поля</summary>
+
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
 | id | VARCHAR | PK | Идентификатор подразделения |
 | parent_department_id | VARCHAR | FK → departments.id | Родительское подразделение (NULL для корневого) |
 | name | VARCHAR | | Название подразделения |
 
+</details>
+
+
 #### employees — сотрудники
+
+<details>
+<summary>Поля</summary>
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
@@ -101,14 +110,26 @@ erDiagram
 | department_id | VARCHAR | FK → departments.id | Подразделение сотрудника |
 | name | VARCHAR | | Имя сотрудника |
 
+</details>
+
+
 #### goal_statuses — статусы целей
+
+<details>
+<summary>Поля</summary>
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
 | id | VARCHAR | PK | Идентификатор статуса |
 | name | VARCHAR | | Название статуса |
 
+</details>
+
+
 #### goals — цели
+
+<details>
+<summary>Поля</summary>
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
@@ -118,7 +139,13 @@ erDiagram
 | status_id | VARCHAR | FK → goal_statuses.id | Текущий статус цели |
 | end_date | DATE | | Плановая дата завершения цели |
 
+</details>
+
+
 #### key_results — ключевые результаты
+
+<details>
+<summary>Поля</summary>
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
@@ -129,7 +156,13 @@ erDiagram
 | weight | NUMERIC | | Вес KR в рамках цели |
 | updated_date | DATE | | Дата последнего обновления факта |
 
+</details>
+
+
 #### rules — справочник правил
+
+<details>
+<summary>Поля</summary>
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
@@ -137,7 +170,13 @@ erDiagram
 | code | VARCHAR | | Код правила проверки |
 | severity | VARCHAR | | Важность |
 
+</details>
+
+
 #### runs — прогоны
+
+<details>
+<summary>Поля</summary>
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
@@ -145,7 +184,13 @@ erDiagram
 | status | VARCHAR | | Статус прогона |
 | snapshot_date | DATE | | Дата, на которую делается срез данных |
 
+</details>
+
+
 #### run_problems — найденные проблемы
+
+<details>
+<summary>Поля</summary>
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
@@ -154,12 +199,18 @@ erDiagram
 | rule_id | VARCHAR | FK → rules.id | Правило, которое сработало |
 | goal_id | VARCHAR | FK → goals.id | Цель, по которой найдена проблема |
 
+</details>
+
+
 
 ## API
 
 ### Получение списка прогонов
 
 GET /api/runs
+
+<details>
+<summary>Описание эндпоинта</summary>
 
 #### Входные данные
 
@@ -246,10 +297,15 @@ HTTP-код: `200 OK`.
 | 16 | Метод не поддерживается | `POST /api/runs` | HTTP 405 в едином формате ошибок |
 | 17 | Ошибка БД | Репозиторий выбрасывает исключение | HTTP 500 в едином формате ошибок, без утечки деталей (стектрейс, SQL) |
 
+</details>
+
 
 ### Проверка состояния сервиса
 
 GET /actuator/health
+
+<details>
+<summary>Описание эндпоинта</summary>
 
 Стандартный эндпоинт Spring Boot Actuator. Используется для проверки работоспособности сервиса (в том числе доступности PostgreSQL), например в healthcheck Docker.
 
@@ -291,10 +347,15 @@ GET /actuator/health
 
 Не требуется
 
+</details>
+
 
 ### Получение метрик по целям и ключевым результатам
 
 GET /api/kkd/summary
+
+<details>
+<summary>Описание эндпоинта</summary>
 
 #### Входные данные
 
@@ -427,10 +488,15 @@ HTTP-код: `200 OK`.
 
 Не требуется
 
+</details>
+
 
 ### Получение списка проблем прогона
 
 GET /api/kkd/issues
+
+<details>
+<summary>Описание эндпоинта</summary>
 
 #### Входные данные
 
@@ -474,6 +540,8 @@ HTTP-код: `200 OK` .
 #### Тестирование
 
 Не требуется
+
+</details>
 
 
 ## Ключевые решения
