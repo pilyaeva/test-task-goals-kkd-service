@@ -42,6 +42,15 @@ class HealthEndpointTest {
         @MockitoBean
         RunRepository runRepository;
 
+        @MockitoBean
+        com.example.testtask.infrastructure.repository.DepartmentRepository departmentRepository;
+
+        @MockitoBean
+        com.example.testtask.infrastructure.repository.GoalRepository goalRepository;
+
+        @MockitoBean
+        com.example.testtask.infrastructure.repository.RunProblemRepository runProblemRepository;
+
         @Test
         void returnsUpWithoutDetails() throws Exception {
             mockMvc.perform(get("/actuator/health"))
@@ -68,6 +77,15 @@ class HealthEndpointTest {
 
         @MockitoBean
         RunRepository runRepository;
+
+        @MockitoBean
+        com.example.testtask.infrastructure.repository.DepartmentRepository departmentRepository;
+
+        @MockitoBean
+        com.example.testtask.infrastructure.repository.GoalRepository goalRepository;
+
+        @MockitoBean
+        com.example.testtask.infrastructure.repository.RunProblemRepository runProblemRepository;
 
         @Test
         void returnsServiceUnavailableWithDownStatus() throws Exception {

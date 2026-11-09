@@ -27,7 +27,7 @@ public class RunServiceImpl implements RunService {
         List<RunListItem> result = new ArrayList<>(runs.size());
         for (int i = 0; i < runs.size(); i++) {
             RunSummary run = runs.get(i);
-            Long comparedRunId = i + 1 < runs.size() ? runs.get(i + 1).id() : null;
+            String comparedRunId = i + 1 < runs.size() ? runs.get(i + 1).id() : null;
             result.add(new RunListItem(
                     run.id(), run.status(), run.snapshotDate(), comparedRunId, run.problemsCount()));
         }

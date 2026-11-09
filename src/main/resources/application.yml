@@ -5,6 +5,8 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/kkd}
     username: kkd
     password: f4e22aa64c9c14dc54e6e61c
+  jackson:
+    property-naming-strategy: SNAKE_CASE
   jpa:
     open-in-view: false
     hibernate:

@@ -33,21 +33,21 @@ class RunControllerTest {
     @Test
     void returnsRunsInSpecFormat() throws Exception {
         when(runService.getRuns()).thenReturn(List.of(
-                new RunListItem(2L, "COMPLETED", LocalDate.parse("2026-11-01"), 1L, 5),
-                new RunListItem(1L, "COMPLETED", LocalDate.parse("2026-10-01"), null, 3)));
+                new RunListItem("RUN-002", "COMPLETED", LocalDate.parse("2026-11-01"), "RUN-001", 5),
+                new RunListItem("RUN-001", "COMPLETED", LocalDate.parse("2026-10-01"), null, 3)));
 
         mockMvc.perform(get("/api/runs"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(2))
+                .andExpect(jsonPath("$[0].id").value("RUN-002"))
                 .andExpect(jsonPath("$[0].status").value("COMPLETED"))
-                .andExpect(jsonPath("$[0].snapshotDate").value("2026-11-01"))
-                .andExpect(jsonPath("$[0].comparedRunId").value(1))
-                .andExpect(jsonPath("$[0].problemsCount").value(5))
-                .andExpect(jsonPath("$[1].comparedRunId").hasJsonPath())
-                .andExpect(jsonPath("$[1].comparedRunId").isEmpty())
-                .andExpect(jsonPath("$[1].problemsCount").value(3));
+                .andExpect(jsonPath("$[0].snapshot_date").value("2026-11-01"))
+                .andExpect(jsonPath("$[0].compared_run_id").value("RUN-001"))
+                .andExpect(jsonPath("$[0].problems_count").value(5))
+                .andExpect(jsonPath("$[1].compared_run_id").hasJsonPath())
+                .andExpect(jsonPath("$[1].compared_run_id").isEmpty())
+                .andExpect(jsonPath("$[1].problems_count").value(3));
     }
 
     @Test
@@ -62,11 +62,11 @@ class RunControllerTest {
     @Test
     void passesStatusThroughUnchanged() throws Exception {
         when(runService.getRuns()).thenReturn(List.of(
-                new RunListItem(1L, "FAILED", LocalDate.parse("2026-01-01"), null, 0)));
+                new RunListItem("RUN-001", "FAILED", LocalDate.parse("2026-01-01"), null, 0)));
 
         mockMvc.perform(get("/api/runs"))
                 .andExpect(jsonPath("$[0].status").value("FAILED"))
-                .andExpect(jsonPath("$[0].problemsCount").value(0));
+                .andExpect(jsonPath("$[0].problems_count").value(0));
     }
 
     @Test

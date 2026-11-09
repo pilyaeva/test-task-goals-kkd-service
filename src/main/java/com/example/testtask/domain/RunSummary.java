@@ -5,5 +5,5 @@ import java.time.LocalDate;
 /**
  * Прогон с числом найденных проблем.
  */
-public record RunSummary(Long id, String status, LocalDate snapshotDate, long problemsCount) {
+public record RunSummary(String id, String status, LocalDate snapshotDate, long problemsCount) {
 }

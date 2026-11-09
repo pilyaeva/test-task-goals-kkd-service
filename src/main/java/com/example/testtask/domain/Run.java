@@ -2,8 +2,6 @@ package com.example.testtask.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
@@ -16,8 +14,7 @@ import java.time.LocalDate;
 public class Run {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     @Column(nullable = false)
     private String status;
@@ -28,12 +25,13 @@ public class Run {
     protected Run() {
     }
 
-    public Run(String status, LocalDate snapshotDate) {
+    public Run(String id, String status, LocalDate snapshotDate) {
+        this.id = id;
         this.status = status;
         this.snapshotDate = snapshotDate;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 

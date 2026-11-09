@@ -43,32 +43,30 @@ class RunRepositoryDbTest {
     @Autowired
     JdbcTemplate jdbc;
 
-    Long ruleId;
-    Long goalId;
+    int problemSeq;
 
     @BeforeEach
     void setUp() {
-        ruleId = jdbc.queryForObject("INSERT INTO rules (code, severity) VALUES ('GOAL_NO_OWNER', 'critical') RETURNING id", Long.class);
-        Long statusId = jdbc.queryForObject("INSERT INTO goal_statuses (name) VALUES ('s') RETURNING id", Long.class);
-        goalId = jdbc.queryForObject(
-                "INSERT INTO goals (status_id) VALUES (" + statusId + ") RETURNING id", Long.class);
+        jdbc.update("INSERT INTO rules (id, code, severity) VALUES ('RULE-1', 'GOAL_NO_OWNER', 'critical')");
+        jdbc.update("INSERT INTO goal_statuses (id, name) VALUES ('ST-1', 's')");
+        jdbc.update("INSERT INTO goals (id, status_id) VALUES ('G-1', 'ST-1')");
     }
 
-    private Run saveRun(String date) {
-        return em.persist(new Run("COMPLETED", LocalDate.parse(date)));
+    private Run saveRun(String id, String date) {
+        return em.persist(new Run(id, "COMPLETED", LocalDate.parse(date)));
     }
 
     private void addProblems(Run run, int count) {
         for (int i = 0; i < count; i++) {
-            em.persist(new RunProblem(run.getId(), ruleId, goalId));
+            em.persist(new RunProblem("PRB-" + (++problemSeq), run.getId(), "RULE-1", "G-1"));
         }
     }
 
     @Test
     void countsProblemsPerRunWithoutMixingAndZeroForEmpty() {
-        Run a = saveRun("2026-01-01");
-        Run b = saveRun("2026-02-01");
-        Run empty = saveRun("2026-03-01");
+        Run a = saveRun("RUN-A", "2026-01-01");
+        Run b = saveRun("RUN-B", "2026-02-01");
+        Run empty = saveRun("RUN-C", "2026-03-01");
         addProblems(a, 2);
         addProblems(b, 7);
         em.flush();
@@ -84,9 +82,9 @@ class RunRepositoryDbTest {
 
     @Test
     void ordersByDateDescThenIdDesc() {
-        Run first = saveRun("2026-01-01");
-        Run sameDate1 = saveRun("2026-06-01");
-        Run sameDate2 = saveRun("2026-06-01");
+        Run first = saveRun("RUN-001", "2026-01-01");
+        Run sameDate1 = saveRun("RUN-002", "2026-06-01");
+        Run sameDate2 = saveRun("RUN-003", "2026-06-01");
         em.flush();
 
         assertThat(runRepository.findAllSummaries()).extracting(RunSummary::id)
@@ -96,5 +94,22 @@ class RunRepositoryDbTest {
     @Test
     void returnsEmptyListWhenNoRuns() {
         assertThat(runRepository.findAllSummaries()).isEmpty();
+    }
+
+    @Test
+    void findsClosestEarlierRunByStrictlyLessDate() {
+        saveRun("RUN-001", "2026-01-01");
+        saveRun("RUN-002", "2026-02-01");
+        saveRun("RUN-003", "2026-02-01");
+        saveRun("RUN-004", "2026-03-01");
+        em.flush();
+
+        // при равных датах строго меньшая дата исключает прогоны с той же датой; берётся больший id
+        assertThat(runRepository.findFirstBySnapshotDateLessThanOrderBySnapshotDateDescIdDesc(
+                LocalDate.parse("2026-03-01"))).get().extracting(Run::getId).isEqualTo("RUN-003");
+        assertThat(runRepository.findFirstBySnapshotDateLessThanOrderBySnapshotDateDescIdDesc(
+                LocalDate.parse("2026-02-01"))).get().extracting(Run::getId).isEqualTo("RUN-001");
+        assertThat(runRepository.findFirstBySnapshotDateLessThanOrderBySnapshotDateDescIdDesc(
+                LocalDate.parse("2026-01-01"))).isEmpty();
     }
 }

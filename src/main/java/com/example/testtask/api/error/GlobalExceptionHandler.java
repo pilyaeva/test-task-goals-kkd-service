@@ -1,11 +1,13 @@
 package com.example.testtask.api.error;
 
+import com.example.testtask.application.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -21,6 +23,20 @@ public class GlobalExceptionHandler {
                 .headers(ex.getHeaders())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new ApiError("METHOD_NOT_ALLOWED", "HTTP-метод не поддерживается"));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiError> handleMissingParameter(MissingServletRequestParameterException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApiError("BAD_REQUEST", "Не указан обязательный параметр " + ex.getParameterName()));
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiError> handleDomainNotFound(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApiError("NOT_FOUND", ex.getMessage()));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

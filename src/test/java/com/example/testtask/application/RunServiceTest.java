@@ -23,8 +23,8 @@ class RunServiceTest {
     @InjectMocks
     RunServiceImpl runService;
 
-    private static RunSummary run(long id, String date, long problems) {
-        return new RunSummary(id, "COMPLETED", LocalDate.parse(date), problems);
+    private static RunSummary run(int id, String date, long problems) {
+        return new RunSummary(String.valueOf(id), "COMPLETED", LocalDate.parse(date), problems);
     }
 
     @Test
@@ -34,8 +34,8 @@ class RunServiceTest {
 
         List<RunListItem> result = runService.getRuns();
 
-        assertThat(result).extracting(RunListItem::id).containsExactly(2L, 1L);
-        assertThat(result.get(0).comparedRunId()).isEqualTo(1L);
+        assertThat(result).extracting(RunListItem::id).containsExactly("2", "1");
+        assertThat(result.get(0).comparedRunId()).isEqualTo("1");
         assertThat(result.get(0).problemsCount()).isEqualTo(5);
         assertThat(result.get(1).comparedRunId()).isNull();
         assertThat(result.get(1).problemsCount()).isEqualTo(3);
@@ -48,7 +48,7 @@ class RunServiceTest {
 
         List<RunListItem> result = runService.getRuns();
 
-        assertThat(result).extracting(RunListItem::comparedRunId).containsExactly(20L, 10L, null);
+        assertThat(result).extracting(RunListItem::comparedRunId).containsExactly("20", "10", null);
     }
 
     @Test
@@ -59,7 +59,7 @@ class RunServiceTest {
 
         List<RunListItem> result = runService.getRuns();
 
-        assertThat(result.get(0).comparedRunId()).isEqualTo(5L);
+        assertThat(result.get(0).comparedRunId()).isEqualTo("5");
         assertThat(result.get(1).comparedRunId()).isNull();
     }
 
@@ -71,7 +71,7 @@ class RunServiceTest {
         List<RunListItem> result = runService.getRuns();
 
         assertThat(result).allSatisfy(item -> assertThat(item.comparedRunId()).isNotEqualTo(item.id()));
-        assertThat(result.get(0).comparedRunId()).isEqualTo(4L);
+        assertThat(result.get(0).comparedRunId()).isEqualTo("4");
         assertThat(result.get(1).comparedRunId()).isNull();
     }
 

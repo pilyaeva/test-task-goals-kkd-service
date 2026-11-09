@@ -2,8 +2,6 @@ package com.example.testtask.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -15,32 +13,40 @@ import jakarta.persistence.Table;
 public class RunProblem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     @Column(name = "run_id", nullable = false)
-    private Long runId;
+    private String runId;
 
     @Column(name = "rule_id", nullable = false)
-    private Long ruleId;
+    private String ruleId;
 
     @Column(name = "goal_id", nullable = false)
-    private Long goalId;
+    private String goalId;
 
     protected RunProblem() {
     }
 
-    public RunProblem(Long runId, Long ruleId, Long goalId) {
+    public RunProblem(String id, String runId, String ruleId, String goalId) {
+        this.id = id;
         this.runId = runId;
         this.ruleId = ruleId;
         this.goalId = goalId;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public Long getRunId() {
+    public String getRunId() {
         return runId;
+    }
+
+    public String getRuleId() {
+        return ruleId;
+    }
+
+    public String getGoalId() {
+        return goalId;
     }
 }

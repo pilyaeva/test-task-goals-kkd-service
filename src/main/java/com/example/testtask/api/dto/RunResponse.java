@@ -4,10 +4,10 @@ import com.example.testtask.application.RunListItem;
 import java.time.LocalDate;
 
 public record RunResponse(
-        Long id,
+        String id,
         String status,
         LocalDate snapshotDate,
-        Long comparedRunId,
+        String comparedRunId,
         int problemsCount) {
 
     public static RunResponse from(RunListItem item) {
