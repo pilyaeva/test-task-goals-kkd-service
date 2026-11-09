@@ -48,7 +48,7 @@ class RunRepositoryDbTest {
 
     @BeforeEach
     void setUp() {
-        ruleId = jdbc.queryForObject("INSERT INTO rules (name) VALUES ('r') RETURNING id", Long.class);
+        ruleId = jdbc.queryForObject("INSERT INTO rules (code, severity) VALUES ('GOAL_NO_OWNER', 'critical') RETURNING id", Long.class);
         Long statusId = jdbc.queryForObject("INSERT INTO goal_statuses (name) VALUES ('s') RETURNING id", Long.class);
         goalId = jdbc.queryForObject(
                 "INSERT INTO goals (status_id) VALUES (" + statusId + ") RETURNING id", Long.class);
