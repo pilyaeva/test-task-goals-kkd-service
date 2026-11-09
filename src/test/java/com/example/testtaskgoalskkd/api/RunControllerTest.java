@@ -74,8 +74,8 @@ class RunControllerTest {
         mockMvc.perform(post("/api/runs"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(header().string("Allow", containsString("GET")))
-                .andExpect(jsonPath("$.code").value("METHOD_NOT_ALLOWED"))
-                .andExpect(jsonPath("$.message").isNotEmpty());
+                .andExpect(jsonPath("$.error.code").value("METHOD_NOT_ALLOWED"))
+                .andExpect(jsonPath("$.error.message").isNotEmpty());
     }
 
     @Test
@@ -84,8 +84,8 @@ class RunControllerTest {
 
         mockMvc.perform(get("/api/runs"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
-                .andExpect(jsonPath("$.message").value("Внутренняя ошибка сервера"))
+                .andExpect(jsonPath("$.error.code").value("INTERNAL_ERROR"))
+                .andExpect(jsonPath("$.error.message").value("Внутренняя ошибка сервера"))
                 .andExpect(content().string(not(containsString("SELECT"))))
                 .andExpect(content().string(not(containsString("IllegalState"))));
     }
@@ -94,6 +94,6 @@ class RunControllerTest {
     void unknownPathReturns404InUnifiedErrorFormat() throws Exception {
         mockMvc.perform(get("/api/unknown"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+                .andExpect(jsonPath("$.error.code").value("NOT_FOUND"));
     }
 }

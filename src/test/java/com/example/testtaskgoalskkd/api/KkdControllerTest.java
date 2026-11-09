@@ -109,19 +109,19 @@ class KkdControllerTest {
     }
 
     @Test
-    void missingRunIdReturns400InUnifiedFormat() throws Exception {
+    void missingRunIdReturns422InUnifiedFormat() throws Exception {
         mockMvc.perform(get("/api/kkd/summary").param("unit_id", "HQ-CIB"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.message").value(containsString("run_id")));
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.error.message").value(containsString("run_id")));
     }
 
     @Test
-    void missingUnitIdReturns400InUnifiedFormat() throws Exception {
+    void missingUnitIdReturns422InUnifiedFormat() throws Exception {
         mockMvc.perform(get("/api/kkd/summary").param("run_id", "RUN-008"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.message").value(containsString("unit_id")));
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.error.message").value(containsString("unit_id")));
     }
 
     @Test
@@ -130,8 +130,8 @@ class KkdControllerTest {
 
         mockMvc.perform(get("/api/kkd/summary").param("run_id", "X").param("unit_id", "HQ-CIB"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
-                .andExpect(jsonPath("$.message").value("Прогон с ID X не найден"));
+                .andExpect(jsonPath("$.error.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.error.message").value("Прогон с ID X не найден"));
     }
 
     @Test
@@ -140,14 +140,14 @@ class KkdControllerTest {
 
         mockMvc.perform(get("/api/kkd/summary").param("run_id", "RUN-008").param("unit_id", "X"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Подразделение с ID X не найдено"));
+                .andExpect(jsonPath("$.error.message").value("Подразделение с ID X не найдено"));
     }
 
     @Test
     void postIsNotAllowed() throws Exception {
         mockMvc.perform(post("/api/kkd/summary"))
                 .andExpect(status().isMethodNotAllowed())
-                .andExpect(jsonPath("$.code").value("METHOD_NOT_ALLOWED"));
+                .andExpect(jsonPath("$.error.code").value("METHOD_NOT_ALLOWED"));
     }
 
     @Test
@@ -156,7 +156,7 @@ class KkdControllerTest {
 
         mockMvc.perform(get("/api/kkd/summary").param("run_id", "RUN-008").param("unit_id", "HQ-CIB"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
+                .andExpect(jsonPath("$.error.code").value("INTERNAL_ERROR"))
                 .andExpect(content().string(not(containsString("SELECT"))));
     }
 }
