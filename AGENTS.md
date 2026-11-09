@@ -46,10 +46,10 @@ cp .env.example .env  # потом заполнить вручную, см. сп
 
 ## Структура пакетов
 
-- `com.example.testtask.api` — контроллеры, DTO, ошибки
-- `com.example.testtask.application` — сервисы
-- `com.example.testtask.domain` — сущности и бизнес-правила
-- `com.example.testtask.infrastructure` — репозитории, конфигурация
+- `com.example.testtaskgoalskkd.api` — контроллеры, DTO, ошибки
+- `com.example.testtaskgoalskkd.application` — сервисы
+- `com.example.testtaskgoalskkd.domain` — сущности и бизнес-правила
+- `com.example.testtaskgoalskkd.infrastructure` — репозитории, конфигурация
 
 ## Определение готовности
 
