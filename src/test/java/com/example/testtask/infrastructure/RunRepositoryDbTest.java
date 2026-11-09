@@ -22,7 +22,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
- * Интеграционный тест репозитория на реальном PostgreSQL 18 (Testcontainers) с миграциями Flyway.
+ * Интеграционный тест репозитория на реальном PostgreSQL 18 (Testcontainers) с миграциями Liquibase.
  * HTTP не используется. Требуется запущенный Docker. Каждый тест откатывается.
  */
 @DataJpaTest

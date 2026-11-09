@@ -10,7 +10,7 @@
 - Spring Web
 - Spring Data JPA
 - PostgreSQL 18
-- Flyway
+- Liquibase (миграции с откатом, см. `specs/design.md`)
 - Maven
 - JUnit 5
 

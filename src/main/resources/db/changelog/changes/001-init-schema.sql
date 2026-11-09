@@ -1,3 +1,6 @@
+--liquibase formatted sql
+
+--changeset polina:001-init-schema
 CREATE TABLE departments (
     id                   VARCHAR PRIMARY KEY,
     parent_department_id VARCHAR REFERENCES departments (id),
@@ -52,3 +55,12 @@ CREATE TABLE run_problems (
 );
 
 CREATE INDEX idx_run_problems_run_id ON run_problems (run_id);
+--rollback DROP INDEX idx_run_problems_run_id;
+--rollback DROP TABLE run_problems;
+--rollback DROP TABLE runs;
+--rollback DROP TABLE rules;
+--rollback DROP TABLE key_results;
+--rollback DROP TABLE goals;
+--rollback DROP TABLE goal_statuses;
+--rollback DROP TABLE employees;
+--rollback DROP TABLE departments;

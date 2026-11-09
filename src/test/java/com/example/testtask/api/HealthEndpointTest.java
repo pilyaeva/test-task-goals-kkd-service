@@ -28,7 +28,7 @@ class HealthEndpointTest {
                     + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
                     + "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
                     + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration,"
-                    + "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration";
+                    + "org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration";
 
     @Nested
     @SpringBootTest(properties = NO_DB)

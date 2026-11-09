@@ -1,19 +1,23 @@
 spring:
+  config:
+    # локальный запуск (IDE, spring-boot:run): подхватить переменные из .env в рабочем каталоге;
+    # переменные окружения (docker compose) имеют приоритет
+    import: optional:file:.env[.properties]
   application:
     name: test-task-goals-kkd-service
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/kkd}
-    username: kkd
-    password: f4e22aa64c9c14dc54e6e61c
+    username: ${DB_USER:kkd}
+    password: ${DB_PASSWORD}
   jackson:
     property-naming-strategy: SNAKE_CASE
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: validate
-  flyway:
+  liquibase:
     enabled: true
-    locations: classpath:db/migration
+    change-log: classpath:db/changelog/db.changelog-master.yaml
 
 server:
   port: ${SERVER_PORT:8080}

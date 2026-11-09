@@ -7,7 +7,7 @@
 - Spring Web
 - Spring Data JPA
 - PostgreSQL 18
-- Flyway
+- Liquibase
 - Maven
 - JUnit 5
 
@@ -203,6 +203,27 @@ erDiagram
 
 
 
+### Миграции и стартовые данные
+
+Миграции — Liquibase, changelog в формате SQL: `src/main/resources/db/changelog/db.changelog-master.yaml` подключает файлы из `changes/` по порядку.
+
+| Файл | Содержимое | context |
+|---|---|---|
+| `001-init-schema.sql` | Схема БД | — (выполняется всегда) |
+| `002-seed-reference.sql` | Справочники: `goal_statuses`, `rules` (4 правила: `GOAL_NO_OWNER`, `GOAL_NO_KR`, `KR_WEIGHTS_SUM`, `KR_STALE_PROGRESS`) | `seed` |
+| `003-seed-goals.sql` | 3 подразделения (иерархия `HQ-CIB` → `CIB-SALES`, отдельный `HQ-RETAIL`), 6 сотрудников, 25 целей, 30 КР | `seed` |
+| `004-seed-runs.sql` | Прогоны `RUN-001` (2026-10-19) и `RUN-002` (2026-10-26) и по 10 проблем в каждом | `seed` |
+
+Правила:
+
+- Каждый changeSet содержит явный `--rollback`; откат выполняется в порядке, обратном накату (с учётом внешних ключей).
+- Откат стартовых данных очищает таблицы целиком: стенд тестовый, пользовательских данных в них нет.
+- Накат → откат → повторный накат проверяется автотестом `MigrationRollbackTest` (PostgreSQL в Testcontainers) и вручную через `liquibase-maven-plugin` (см. README).
+- Интеграционные тесты репозиториев запускаются с `spring.liquibase.contexts=schema` (`src/test/resources/application.properties`): стартовые данные не накатываются, тесты создают свои.
+- Стартовые данные согласованы: срез целей соответствует `RUN-002`; `RUN-002` относительно `RUN-001` — новых 3, сохранившихся 7, исправленных 3. Граничные случаи: КР, обновлённый ровно 45 дней назад (`G-14`), не нарушает `KR_STALE_PROGRESS`, на 46-й день (`G-13`) — нарушает; неактивные цели (`G-06`, `G-07`, `G-23`) правилами не проверяются.
+- Изменение уже применённых changeSet'ов запрещено (контрольные суммы Liquibase): изменения схемы добавляются новым файлом и новым `include`.
+
+
 ## API
 
 ### Проверка состояния сервиса
@@ -284,20 +305,20 @@ HTTP-код: `200 OK`.
 
 ```json
 [
-  {
-    "id": "RUN-002",
-    "status": "COMPLETED",
-    "snapshot_date": "2026-11-01",
-    "compared_run_id": "RUN-001",
-    "problems_count": 5
-  },
-  {
-    "id": "RUN-001",
-    "status": "COMPLETED",
-    "snapshot_date": "2026-10-01",
-    "compared_run_id": null,
-    "problems_count": 3
-  }
+    {
+        "id": "RUN-002",
+        "status": "COMPLETED",
+        "snapshot_date": "2026-10-26",
+        "compared_run_id": "RUN-001",
+        "problems_count": 10
+    },
+    {
+        "id": "RUN-001",
+        "status": "COMPLETED",
+        "snapshot_date": "2026-10-19",
+        "compared_run_id": null,
+        "problems_count": 10
+    }
 ]
 ```
 
@@ -548,7 +569,7 @@ HTTP-код: `200 OK` .
 
 ### Тестирование
 
-Уровни: сервис (unit, репозиторий замокан); контроллер (`@WebMvcTest` + `MockMvc`) — формат ответа и коды; интеграционный (PostgreSQL + Flyway) — реальный запрос и подсчёт `run_problems`.
+Уровни: сервис (unit, репозиторий замокан); контроллер (`@WebMvcTest` + `MockMvc`) — формат ответа и коды; интеграционный (PostgreSQL + Liquibase) — реальный запрос и подсчёт `run_problems`.
 
 HTTP-сервер в тестах не запускается: никаких `@SpringBootTest(webEnvironment = RANDOM_PORT/DEFINED_PORT)` и `TestRestTemplate`. Запросы выполняются через `MockMvc` (без сетевого порта); интеграционные тесты проверяют сервис и репозиторий напрямую (`@DataJpaTest` или `@SpringBootTest(webEnvironment = MOCK)`), без HTTP.
 

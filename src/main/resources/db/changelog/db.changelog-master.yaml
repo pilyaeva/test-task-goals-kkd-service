@@ -1,0 +1,11 @@
+databaseChangeLog:
+  # Схема: changeSet'ы без context выполняются всегда.
+  - include:
+      file: db/changelog/changes/001-init-schema.sql
+  # Стартовые данные: context "seed". Интеграционные тесты их отключают (spring.liquibase.contexts=schema).
+  - include:
+      file: db/changelog/changes/002-seed-reference.sql
+  - include:
+      file: db/changelog/changes/003-seed-goals.sql
+  - include:
+      file: db/changelog/changes/004-seed-runs.sql
