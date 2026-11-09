@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.testtask.infrastructure.repository.RunRepository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
@@ -35,6 +37,10 @@ class HealthEndpointTest {
 
         @Autowired
         MockMvc mockMvc;
+
+        // JPA отключён, поэтому репозиторий, нужный RunService, подменяем
+        @MockitoBean
+        RunRepository runRepository;
 
         @Test
         void returnsUpWithoutDetails() throws Exception {
@@ -59,6 +65,9 @@ class HealthEndpointTest {
 
         @Autowired
         MockMvc mockMvc;
+
+        @MockitoBean
+        RunRepository runRepository;
 
         @Test
         void returnsServiceUnavailableWithDownStatus() throws Exception {

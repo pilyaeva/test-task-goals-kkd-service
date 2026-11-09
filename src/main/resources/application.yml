@@ -3,8 +3,8 @@ spring:
     name: test-task-goals-kkd-service
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/kkd}
-    username: ${DB_USER:kkd}
-    password: ${DB_PASSWORD:kkd}
+    username: kkd
+    password: f4e22aa64c9c14dc54e6e61c
   jpa:
     open-in-view: false
     hibernate:
