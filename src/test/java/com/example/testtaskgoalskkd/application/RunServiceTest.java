@@ -2,15 +2,29 @@ package com.example.testtaskgoalskkd.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.testtaskgoalskkd.domain.Goal;
+import com.example.testtaskgoalskkd.domain.Run;
 import com.example.testtaskgoalskkd.domain.RunSummary;
+import com.example.testtaskgoalskkd.domain.quality.QualityRuleEngine;
+import com.example.testtaskgoalskkd.infrastructure.repository.GoalRepository;
+import com.example.testtaskgoalskkd.infrastructure.repository.KeyResultRepository;
+import com.example.testtaskgoalskkd.infrastructure.repository.RuleRepository;
+import com.example.testtaskgoalskkd.infrastructure.repository.RunProblemRepository;
 import com.example.testtaskgoalskkd.infrastructure.repository.RunRepository;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -19,9 +33,26 @@ class RunServiceTest {
 
     @Mock
     RunRepository runRepository;
+    @Mock
+    RunProblemRepository runProblemRepository;
+    @Mock
+    GoalRepository goalRepository;
+    @Mock
+    KeyResultRepository keyResultRepository;
+    @Mock
+    RuleRepository ruleRepository;
 
-    @InjectMocks
+    static final LocalDate TODAY = LocalDate.parse("2026-11-09");
+
     RunServiceImpl runService;
+
+    @BeforeEach
+    void setUp() {
+        runService = new RunServiceImpl(
+                runRepository, runProblemRepository, goalRepository, keyResultRepository, ruleRepository,
+                new QualityRuleEngine(),
+                Clock.fixed(TODAY.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC));
+    }
 
     private static RunSummary run(int id, String date, long problems) {
         return new RunSummary(String.valueOf(id), "COMPLETED", LocalDate.parse(date), problems);
@@ -98,5 +129,38 @@ class RunServiceTest {
         when(runRepository.findAllSummaries()).thenThrow(new IllegalStateException("db down"));
 
         assertThatThrownBy(() -> runService.getRuns()).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void startRunSavesRunWithTodayAsSnapshotDate() {
+        when(goalRepository.findByStatusId("ACTIVE")).thenReturn(List.of());
+        when(runRepository.findAllIds()).thenReturn(List.of());
+        when(runProblemRepository.findAllIds()).thenReturn(List.of());
+        when(runRepository.findAllSummaries())
+                .thenReturn(List.of(new RunSummary("RUN-001", "COMPLETED", TODAY, 0)));
+
+        RunListItem result = runService.startRun();
+
+        assertThat(result.id()).isEqualTo("RUN-001");
+        assertThat(result.problemsCount()).isZero();
+        ArgumentCaptor<Run> saved = ArgumentCaptor.forClass(Run.class);
+        verify(runRepository).save(saved.capture());
+        assertThat(saved.getValue().getSnapshotDate()).isEqualTo(TODAY);
+        assertThat(saved.getValue().getStatus()).isEqualTo("COMPLETED");
+    }
+
+    @Test
+    void startRunFailsWithoutSavingWhenRuleIsMissingInDictionary() {
+        Goal goal = mock(Goal.class);
+        when(goal.getId()).thenReturn("G-1");
+        when(goal.getStatusId()).thenReturn("ACTIVE");
+        when(goalRepository.findByStatusId("ACTIVE")).thenReturn(List.of(goal));
+        when(keyResultRepository.findByGoalIdIn(List.of("G-1"))).thenReturn(List.of());
+        when(ruleRepository.findAll()).thenReturn(List.of());
+
+        assertThatThrownBy(() -> runService.startRun()).isInstanceOf(IllegalStateException.class);
+
+        verify(runRepository, never()).save(any());
+        verify(runProblemRepository, never()).saveAll(any());
     }
 }

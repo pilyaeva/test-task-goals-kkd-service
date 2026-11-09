@@ -250,6 +250,16 @@ class KkdSummaryServiceTest {
     }
 
     @Test
+    void whenRunAndUnitAreUnknownRunIsReported() {
+        when(runRepository.findById("NOPE")).thenReturn(Optional.empty());
+        when(departmentRepository.findById("NOPE")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getSummary("NOPE", "NOPE"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Прогон с ID NOPE не найден");
+    }
+
+    @Test
     void propagatesRepositoryFailure() {
         when(runProblemRepository.findByRunAndDepartments("RUN-008", DEPARTMENTS))
                 .thenThrow(new IllegalStateException("db down"));

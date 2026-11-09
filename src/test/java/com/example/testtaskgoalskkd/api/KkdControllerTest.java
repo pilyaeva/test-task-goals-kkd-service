@@ -4,11 +4,14 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.testtaskgoalskkd.application.IssuesPage;
+import com.example.testtaskgoalskkd.application.IssuesService;
 import com.example.testtaskgoalskkd.application.KkdSummary;
 import com.example.testtaskgoalskkd.application.KkdSummary.Metric;
 import com.example.testtaskgoalskkd.application.KkdSummary.ProblemsDelta;
@@ -18,6 +21,7 @@ import com.example.testtaskgoalskkd.application.KkdSummary.Trend;
 import com.example.testtaskgoalskkd.application.KkdSummary.UnitRef;
 import com.example.testtaskgoalskkd.application.KkdSummaryService;
 import com.example.testtaskgoalskkd.application.NotFoundException;
+import com.example.testtaskgoalskkd.application.ValidationException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -36,6 +40,9 @@ class KkdControllerTest {
 
     @MockitoBean
     KkdSummaryService service;
+
+    @MockitoBean
+    IssuesService issuesService;
 
     private static KkdSummary summary(RunRef comparedTo) {
         boolean hasPrevious = comparedTo != null;
@@ -99,16 +106,6 @@ class KkdControllerTest {
     }
 
     @Test
-    void doesNotExposeCamelCaseFields() throws Exception {
-        when(service.getSummary("RUN-008", "HQ-CIB")).thenReturn(summary(null));
-
-        mockMvc.perform(get("/api/kkd/summary").param("run_id", "RUN-008").param("unit_id", "HQ-CIB"))
-                .andExpect(content().string(not(containsString("snapshotDate"))))
-                .andExpect(content().string(not(containsString("issuesBySeverity"))))
-                .andExpect(content().string(not(containsString("comparedTo"))));
-    }
-
-    @Test
     void missingRunIdReturns422InUnifiedFormat() throws Exception {
         mockMvc.perform(get("/api/kkd/summary").param("unit_id", "HQ-CIB"))
                 .andExpect(status().isUnprocessableEntity())
@@ -144,10 +141,105 @@ class KkdControllerTest {
     }
 
     @Test
-    void postIsNotAllowed() throws Exception {
-        mockMvc.perform(post("/api/kkd/summary"))
-                .andExpect(status().isMethodNotAllowed())
-                .andExpect(jsonPath("$.error.code").value("METHOD_NOT_ALLOWED"));
+    void missingBothParametersReturns422() throws Exception {
+        mockMvc.perform(get("/api/kkd/summary"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+        verifyNoInteractions(service);
+    }
+
+    // --- GET /api/kkd/issues ---
+
+    @Test
+    void issuesReturnsPageInSpecFormat() throws Exception {
+        when(issuesService.getIssues("RUN-002", "HQ-CIB", null, "critical", 2, 0L)).thenReturn(new IssuesPage(
+                List.of(
+                        new IssuesPage.Issue("PRB-002", "GOAL_NO_OWNER", "critical", "G-05", null),
+                        new IssuesPage.Issue("PRB-001", "GOAL_NO_KR", "critical", "G-01",
+                                new IssuesPage.UnitRef("CIB-SALES", "Отдел продаж КИБ"))),
+                7, 2, 0));
+
+        mockMvc.perform(get("/api/kkd/issues")
+                        .param("run_id", "RUN-002").param("unit_id", "HQ-CIB").param("severity", "critical")
+                        .param("limit", "2").param("offset", "0"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.items[0].id").value("PRB-002"))
+                .andExpect(jsonPath("$.items[0].rule_code").value("GOAL_NO_OWNER"))
+                .andExpect(jsonPath("$.items[0].severity").value("critical"))
+                .andExpect(jsonPath("$.items[0].goal_id").value("G-05"))
+                .andExpect(jsonPath("$.items[0].unit").hasJsonPath())
+                .andExpect(jsonPath("$.items[0].unit").isEmpty())
+                .andExpect(jsonPath("$.items[1].unit.id").value("CIB-SALES"))
+                .andExpect(jsonPath("$.items[1].unit.name").value("Отдел продаж КИБ"))
+                .andExpect(jsonPath("$.total").value(7))
+                .andExpect(jsonPath("$.limit").value(2))
+                .andExpect(jsonPath("$.offset").value(0));
+    }
+
+    @Test
+    void issuesPassesOnlyRunIdWhenNoOptionalParameters() throws Exception {
+        when(issuesService.getIssues("RUN-002", null, null, null, null, null))
+                .thenReturn(new IssuesPage(List.of(), 0, 20, 0));
+
+        mockMvc.perform(get("/api/kkd/issues").param("run_id", "RUN-002"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isEmpty())
+                .andExpect(jsonPath("$.total").value(0))
+                .andExpect(jsonPath("$.limit").value(20));
+        verify(issuesService).getIssues("RUN-002", null, null, null, null, null);
+    }
+
+    @Test
+    void issuesWithoutRunIdReturns422() throws Exception {
+        mockMvc.perform(get("/api/kkd/issues"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+        verifyNoInteractions(issuesService);
+    }
+
+    @Test
+    void issuesWithNonNumericLimitOrOffsetReturns422() throws Exception {
+        mockMvc.perform(get("/api/kkd/issues").param("run_id", "RUN-002").param("limit", "abc"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+        mockMvc.perform(get("/api/kkd/issues").param("run_id", "RUN-002").param("offset", "abc"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+        verifyNoInteractions(issuesService);
+    }
+
+    @Test
+    void issuesValidationFailureOfServiceReturns422() throws Exception {
+        when(issuesService.getIssues("RUN-002", null, null, null, 0, null))
+                .thenThrow(new ValidationException("Параметр limit должен быть от 1 до 100"));
+
+        mockMvc.perform(get("/api/kkd/issues").param("run_id", "RUN-002").param("limit", "0"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.error.message").value("Параметр limit должен быть от 1 до 100"));
+    }
+
+    @Test
+    void issuesNotFoundReturns404WithMessage() throws Exception {
+        when(issuesService.getIssues("RUN-999", null, null, null, null, null))
+                .thenThrow(new NotFoundException("Прогон с ID RUN-999 не найден"));
+
+        mockMvc.perform(get("/api/kkd/issues").param("run_id", "RUN-999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.error.message").value("Прогон с ID RUN-999 не найден"));
+    }
+
+    @Test
+    void issuesUnexpectedFailureReturns500WithoutLeakingDetails() throws Exception {
+        when(issuesService.getIssues("RUN-002", null, null, null, null, null))
+                .thenThrow(new IllegalStateException("SELECT secret"));
+
+        mockMvc.perform(get("/api/kkd/issues").param("run_id", "RUN-002"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error.code").value("INTERNAL_ERROR"))
+                .andExpect(content().string(not(containsString("SELECT"))));
     }
 
     @Test

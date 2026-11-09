@@ -16,6 +16,12 @@ public interface RunRepository extends JpaRepository<Run, String> {
     Optional<Run> findFirstBySnapshotDateLessThanOrderBySnapshotDateDescIdDesc(LocalDate snapshotDate);
 
     /**
+     * Идентификаторы всех прогонов (для генерации следующего номера).
+     */
+    @Query("select r.id from Run r")
+    List<String> findAllIds();
+
+    /**
      * Все прогоны с числом проблем одним запросом (без N+1),
      * от новых к старым; при равной дате снимка — по id по убыванию.
      */

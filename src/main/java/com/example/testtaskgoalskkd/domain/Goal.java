@@ -18,7 +18,14 @@ public class Goal {
     @Column(name = "assignee_employee_id")
     private String assigneeEmployeeId;
 
+    @Column(name = "status_id", nullable = false)
+    private String statusId;
+
     protected Goal() {
+    }
+
+    public String getStatusId() {
+        return statusId;
     }
 
     public String getId() {

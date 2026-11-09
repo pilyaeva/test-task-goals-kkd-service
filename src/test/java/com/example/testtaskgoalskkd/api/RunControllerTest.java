@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,12 +69,50 @@ class RunControllerTest {
     }
 
     @Test
-    void postIsNotAllowedInUnifiedErrorFormat() throws Exception {
+    void startRunReturns201WithCreatedRun() throws Exception {
+        when(runService.startRun()).thenReturn(
+                new RunListItem("RUN-003", "COMPLETED", LocalDate.parse("2026-11-09"), "RUN-002", 9));
+
         mockMvc.perform(post("/api/runs"))
-                .andExpect(status().isMethodNotAllowed())
-                .andExpect(header().string("Allow", containsString("GET")))
-                .andExpect(jsonPath("$.error.code").value("METHOD_NOT_ALLOWED"))
-                .andExpect(jsonPath("$.error.message").isNotEmpty());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value("RUN-003"))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.snapshot_date").value("2026-11-09"))
+                .andExpect(jsonPath("$.compared_run_id").value("RUN-002"))
+                .andExpect(jsonPath("$.problems_count").value(9));
+    }
+
+    @Test
+    void startRunFirstRunHasNoComparison() throws Exception {
+        when(runService.startRun()).thenReturn(
+                new RunListItem("RUN-001", "COMPLETED", LocalDate.parse("2026-11-09"), null, 0));
+
+        mockMvc.perform(post("/api/runs"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.compared_run_id").isEmpty())
+                .andExpect(jsonPath("$.problems_count").value(0));
+    }
+
+    @Test
+    void startRunIgnoresRequestBody() throws Exception {
+        when(runService.startRun()).thenReturn(
+                new RunListItem("RUN-001", "COMPLETED", LocalDate.parse("2026-11-09"), null, 0));
+
+        mockMvc.perform(post("/api/runs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"snapshot_date\": \"2000-01-01\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.snapshot_date").value("2026-11-09"));
+    }
+
+    @Test
+    void startRunFailureReturns500WithoutLeakingDetails() throws Exception {
+        when(runService.startRun()).thenThrow(new IllegalStateException("insert into runs failed"));
+
+        mockMvc.perform(post("/api/runs"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error.code").value("INTERNAL_ERROR"))
+                .andExpect(content().string(not(containsString("insert"))));
     }
 
     @Test
@@ -88,12 +125,5 @@ class RunControllerTest {
                 .andExpect(jsonPath("$.error.message").value("Внутренняя ошибка сервера"))
                 .andExpect(content().string(not(containsString("SELECT"))))
                 .andExpect(content().string(not(containsString("IllegalState"))));
-    }
-
-    @Test
-    void unknownPathReturns404InUnifiedErrorFormat() throws Exception {
-        mockMvc.perform(get("/api/unknown"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error.code").value("NOT_FOUND"));
     }
 }

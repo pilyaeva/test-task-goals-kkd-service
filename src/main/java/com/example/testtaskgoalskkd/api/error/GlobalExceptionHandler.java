@@ -1,6 +1,7 @@
 package com.example.testtaskgoalskkd.api.error;
 
 import com.example.testtaskgoalskkd.application.NotFoundException;
+import com.example.testtaskgoalskkd.application.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new ApiError("VALIDATION_ERROR", "Некорректное значение параметра " + ex.getName()));
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ApiError> handleValidation(ValidationException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApiError("VALIDATION_ERROR", ex.getMessage()));
     }
 
     @ExceptionHandler(NotFoundException.class)
