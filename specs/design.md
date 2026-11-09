@@ -37,49 +37,49 @@ erDiagram
     goals ||--o{ run_problems : "goal_id"
 
     departments {
-        BIGINT id PK
-        BIGINT parent_department_id FK
+        VARCHAR id PK
+        VARCHAR parent_department_id FK
         VARCHAR name
     }
     employees {
-        BIGINT id PK
-        BIGINT department_id FK
+        VARCHAR id PK
+        VARCHAR department_id FK
         VARCHAR name
     }
     goal_statuses {
-        BIGINT id PK
+        VARCHAR id PK
         VARCHAR name
     }
     goals {
-        BIGINT id PK
-        BIGINT parent_goal_id FK
-        BIGINT assignee_employee_id FK
-        BIGINT status_id FK
+        VARCHAR id PK
+        VARCHAR parent_goal_id FK
+        VARCHAR assignee_employee_id FK
+        VARCHAR status_id FK
         DATE end_date
     }
     key_results {
-        BIGINT id PK
-        BIGINT goal_id FK
+        VARCHAR id PK
+        VARCHAR goal_id FK
         NUMERIC target_value
         NUMERIC fact_value
         NUMERIC weight
         DATE updated_date
     }
     rules {
-        BIGINT id PK
+        VARCHAR id PK
         VARCHAR code
         VARCHAR severity
     }
     runs {
-        BIGINT id PK
+        VARCHAR id PK
         VARCHAR status
         DATE snapshot_date
     }
     run_problems {
-        BIGINT id PK
-        BIGINT run_id FK
-        BIGINT rule_id FK
-        BIGINT goal_id FK
+        VARCHAR id PK
+        VARCHAR run_id FK
+        VARCHAR rule_id FK
+        VARCHAR goal_id FK
     }
 ```
 
@@ -89,41 +89,41 @@ erDiagram
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
-| id | BIGINT | PK | Идентификатор подразделения |
-| parent_department_id | BIGINT | FK → departments.id | Родительское подразделение (NULL для корневого) |
+| id | VARCHAR | PK | Идентификатор подразделения |
+| parent_department_id | VARCHAR | FK → departments.id | Родительское подразделение (NULL для корневого) |
 | name | VARCHAR | | Название подразделения |
 
 #### employees — сотрудники
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
-| id | BIGINT | PK | Идентификатор сотрудника |
-| department_id | BIGINT | FK → departments.id | Подразделение сотрудника |
+| id | VARCHAR | PK | Идентификатор сотрудника |
+| department_id | VARCHAR | FK → departments.id | Подразделение сотрудника |
 | name | VARCHAR | | Имя сотрудника |
 
 #### goal_statuses — статусы целей
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
-| id | BIGINT | PK | Идентификатор статуса |
+| id | VARCHAR | PK | Идентификатор статуса |
 | name | VARCHAR | | Название статуса |
 
 #### goals — цели
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
-| id | BIGINT | PK | Идентификатор цели |
-| parent_goal_id | BIGINT | FK → goals.id | Родительская цель (NULL для верхнеуровневой) |
-| assignee_employee_id | BIGINT | FK → employees.id | Исполнитель цели |
-| status_id | BIGINT | FK → goal_statuses.id | Текущий статус цели |
+| id | VARCHAR | PK | Идентификатор цели |
+| parent_goal_id | VARCHAR | FK → goals.id | Родительская цель (NULL для верхнеуровневой) |
+| assignee_employee_id | VARCHAR | FK → employees.id | Исполнитель цели |
+| status_id | VARCHAR | FK → goal_statuses.id | Текущий статус цели |
 | end_date | DATE | | Плановая дата завершения цели |
 
 #### key_results — ключевые результаты
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
-| id | BIGINT | PK | Идентификатор ключевого результата |
-| goal_id | BIGINT | FK → goals.id | Цель, к которой относится KR |
+| id | VARCHAR | PK | Идентификатор ключевого результата |
+| goal_id | VARCHAR | FK → goals.id | Цель, к которой относится KR |
 | target_value | NUMERIC | | Целевое значение |
 | fact_value | NUMERIC | | Фактическое значение |
 | weight | NUMERIC | | Вес KR в рамках цели |
@@ -133,7 +133,7 @@ erDiagram
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
-| id | BIGINT | PK | Идентификатор правила |
+| id | VARCHAR | PK | Идентификатор правила |
 | code | VARCHAR | | Код правила проверки |
 | severity | VARCHAR | | Важность |
 
@@ -141,7 +141,7 @@ erDiagram
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
-| id | BIGINT | PK | Идентификатор прогона |
+| id | VARCHAR | PK | Идентификатор прогона |
 | status | VARCHAR | | Статус прогона |
 | snapshot_date | DATE | | Дата, на которую делается срез данных |
 
@@ -149,10 +149,10 @@ erDiagram
 
 | Поле | Тип данных | Ключ | Описание |
 |---|---|---|---|
-| id | BIGINT | PK | Идентификатор проблемы |
-| run_id | BIGINT | FK → runs.id | Прогон, в котором найдена проблема |
-| rule_id | BIGINT | FK → rules.id | Правило, которое сработало |
-| goal_id | BIGINT | FK → goals.id | Цель, по которой найдена проблема |
+| id | VARCHAR | PK | Идентификатор проблемы |
+| run_id | VARCHAR | FK → runs.id | Прогон, в котором найдена проблема |
+| rule_id | VARCHAR | FK → rules.id | Правило, которое сработало |
+| goal_id | VARCHAR | FK → goals.id | Цель, по которой найдена проблема |
 
 
 ## API
@@ -173,10 +173,10 @@ HTTP-код: `200 OK`.
 
 | Поле | Тип данных | Обязательность | Описание |
 |---|---|---|---|
-| id | BIGINT | Да | Идентификатор прогона |
+| id | STRING | Да | Идентификатор прогона |
 | status | STRING | Да | Статус прогона |
 | snapshotDate | DATE (`YYYY-MM-DD`) | Да | Дата снимка данных |
-| comparedRunId | BIGINT | Нет | Идентификатор прогона, с которым сравнивается текущий |
+| comparedRunId | STRING | Нет | Идентификатор прогона, с которым сравнивается текущий |
 | problemsCount | INTEGER | Да | Число найденных проблем |
 
 Пример ответа:
@@ -184,14 +184,14 @@ HTTP-код: `200 OK`.
 ```json
 [
   {
-    "id": 2,
+    "id": "RUN-002",
     "status": "COMPLETED",
     "snapshotDate": "2026-11-01",
-    "comparedRunId": 1,
+    "comparedRunId": "RUN-001",
     "problemsCount": 5
   },
   {
-    "id": 1,
+    "id": "RUN-001",
     "status": "COMPLETED",
     "snapshotDate": "2026-10-01",
     "comparedRunId": null,
@@ -204,7 +204,7 @@ HTTP-код: `200 OK`.
 
 1. Получить все прогоны из таблицы `runs`.
 2. Для каждого прогона получить количество проблем из таблицы `run_problems` по `runs.id` = `run_problems.run_id`.
-3. Отсортировать прогоны по дате снимка (snapshot_date) по убыванию (сначала самый новый); при равной дате - по `id` по убыванию.
+3. Отсортировать прогоны по дате снимка (snapshot_date) по убыванию (сначала самый новый); при равной дате - по `id` по убыванию (строковое сравнение).
 4. Каждый прогон связать с предыдущим (прогон с ближайшей более ранней датой снимка).
     1. Если для прогона не найден предыдущий прогон, то предыдущий прогон установить null.
 5. Вернуть список прогонов:
@@ -224,7 +224,7 @@ HTTP-код: `200 OK`.
 
 | № | Сценарий | Исходные данные | Ожидаемый результат |
 |---|---|---|---|
-| 1 | Пример из спецификации | Прогон 1 (`2026-10-01`, 3 проблемы), прогон 2 (`2026-11-01`, 5 проблем) | HTTP 200; порядок в массиве: сначала прогон 2, затем прогон 1; прогон 2: `comparedRunId=1`, `problemsCount=5`; прогон 1: `comparedRunId=null`, `problemsCount=3` |
+| 1 | Пример из спецификации | Прогон `RUN-001` (`2026-10-01`, 3 проблемы), прогон `RUN-002` (`2026-11-01`, 5 проблем) | HTTP 200; порядок в массиве: сначала `RUN-002`, затем `RUN-001`; `RUN-002`: `comparedRunId=RUN-001`, `problemsCount=5`; `RUN-001`: `comparedRunId=null`, `problemsCount=3` |
 | 2 | Цепочка из трёх прогонов | Прогоны с датами D1 < D2 < D3 | `comparedRunId`: D1 → `null`, D2 → id(D1), D3 → id(D2) |
 | 3 | Подсчёт проблем | Прогон с 4 записями в `run_problems` | `problemsCount=4` |
 | 4 | Прогон без проблем | Прогон без записей в `run_problems` | `problemsCount=0` (не `null`) |
@@ -238,8 +238,8 @@ HTTP-код: `200 OK`.
 |---|---|---|---|
 | 8 | Нет прогонов | Таблица `runs` пуста | HTTP 200, `[]` (не 404, не `null`) |
 | 9 | Один прогон | Одна запись в `runs` | Один элемент, `comparedRunId=null` |
-| 10 | Порядок `id` не совпадает с порядком дат | Прогон `id=5` с датой `2026-01-01`, прогон `id=2` с датой `2026-06-01` | Предыдущий определяется по `snapshot_date`, а не по `id`: у `id=2` `comparedRunId=5`, у `id=5` — `null` |
-| 11 | Одинаковая `snapshot_date` у нескольких прогонов | Два прогона с одной датой | Результат детерминирован при повторных вызовах; связывание не образует цикл и не ссылается на сам прогон (tie-break: при равной дате прогон с большим `id` считается более новым, т.е. сравнивается с прогоном с меньшим `id`) |
+| 10 | Порядок `id` не совпадает с порядком дат | Прогон `id=RUN-005` с датой `2026-01-01`, прогон `id=RUN-002` с датой `2026-06-01` | Предыдущий определяется по `snapshot_date`, а не по `id`: у `id=RUN-002` `comparedRunId=RUN-005`, у `id=RUN-005` — `null` |
+| 11 | Одинаковая `snapshot_date` у нескольких прогонов | Два прогона с одной датой | Результат детерминирован при повторных вызовах; связывание не образует цикл и не ссылается на сам прогон (tie-break: при равной дате прогон с большим `id` (строковое сравнение) считается более новым, т.е. сравнивается с прогоном с меньшим `id`) |
 | 12 | Прогон не ссылается сам на себя | Любой набор | Ни у одного элемента `comparedRunId` не равен его `id` |
 | 13 | Прогон прошлого или будущего в сравнении с текущей датой | `snapshot_date` в далёком прошлом / будущем | Обрабатываются как обычные, сортировка корректна |
 | 15 | Большой объём | ~1000 прогонов, у каждого десятки проблем | HTTP 200, значения корректны; число SQL-запросов не растёт пропорционально числу прогонов (нет N+1) |
@@ -300,8 +300,8 @@ GET /api/kkd/summary
 
 | Поле | Тип данных | Обязательность | Описание |
 |---|---|---|---|
-| run_id | BIGINT | Да | Идентификатор прогона |
-| unit_id | BIGINT | Да | Идентификатор подразделения |
+| run_id | STRING | Да | Идентификатор прогона |
+| unit_id | STRING | Да | Идентификатор подразделения |
 
 #### Выходные данные
 
@@ -312,13 +312,13 @@ HTTP-код: `200 OK`.
 | Поле | Тип данных | Обязательность | Описание |
 |---|---|---|---|
 | run | OBJECT | Да | Текущий прогон |
-| run.id | BIGINT | Да | Идентификатор прогона |
+| run.id | STRING | Да | Идентификатор прогона |
 | run.snapshot_date | DATE (`YYYY-MM-DD`) | Да | Дата снимка данных |
 | compared_to | OBJECT | Нет | Прогон, с которым сравнивается текущий; `null`, если предыдущего прогона нет |
-| compared_to.id | BIGINT | Да | Идентификатор прогона сравнения |
+| compared_to.id | STRING | Да | Идентификатор прогона сравнения |
 | compared_to.snapshot_date | DATE (`YYYY-MM-DD`) | Да | Дата снимка данных прогона сравнения |
 | unit | OBJECT | Да | Подразделение, по которому построена сводка |
-| unit.id | BIGINT | Да | Идентификатор подразделения |
+| unit.id | STRING | Да | Идентификатор подразделения |
 | unit.name | STRING | Да | Название подразделения |
 | metrics | ARRAY | Да | Метрики качества данных по целям и ключевым результатам |
 | issues_by_severity | ARRAY | Да | Количество проблем в разрезе критичности |
@@ -444,7 +444,7 @@ HTTP-код: `200 OK` .
 
 | Поле | Тип данных | Обязательность | Описание |
 |---|---|---|---|
-| id | BIGINT | Да | Идентификатор проблемы |
+| id | STRING | Да | Идентификатор проблемы |
 | problemName | STRING | Да | Текст проблемы |
 | status | STRING | Да | Статус |
 
@@ -453,12 +453,12 @@ HTTP-код: `200 OK` .
 ```json
 [
   {
-    "id": 2,
+    "id": "PRB-002",
     "problemName": "GOAL_NO_OWNER",
     "status": "critical"
   },
   {
-    "id": 1,
+    "id": "PRB-001",
     "status": "COMPLETED",
     "snapshotDate": "2026-10-01",
     "comparedRunId": null,
